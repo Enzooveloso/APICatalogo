@@ -14,11 +14,11 @@ public class Category
     [Key]//Define aa propriedade CategoryId como Primarykey no MySQL
     public int CategoryId { get; set; }
 
-    [Required]//Inidcar mapear a propriedade Name para uma coluna Not Null
+    [Required]//Iniciar mapear a propriedade Name para uma coluna Not Null
     [StringLength(80)]//Define tamanho em Bytes
     public string? Name { get; set; }
 
-    [Required]//Inidcar mapear a propriedade ImageUrl para uma coluna Not Null
+    [Required]//Iniciar mapear a propriedade ImageUrl para uma coluna Not Null
     [StringLength(300)]//Define tamanho em Bytes
     public string? ImageUrl { get; set; }
 
