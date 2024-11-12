@@ -49,10 +49,11 @@ public class ProductsController : ControllerBase
         }
         _context.Products.Add(product);
         _context.SaveChanges();
-        return  new CreatedAtRouteResult("ObterProduto", new { id = product.ProductID }, product);
+        return  new CreatedAtRouteResult("ObterProduto", 
+            new { id = product.ProductID }, product);
     }
 
-    //Edição completa dos produutos existentes
+    //Edição completa dos produtos existentes
     [HttpPut("{id:int}")]
     public ActionResult Put(int id, Product product)
     {
@@ -65,6 +66,7 @@ public class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]
     public ActionResult Delete(int id)
     {
