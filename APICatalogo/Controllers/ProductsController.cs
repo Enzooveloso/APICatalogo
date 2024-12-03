@@ -14,16 +14,17 @@ namespace APICatalogo.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly IProductRepository _productRepository;
-    public ProductsController(IProductRepository productRepository)
+    private readonly IUnitOfWork _uof;
+    public ProductsController(IUnitOfWork uof)
     {
-        _productRepository = productRepository;    
+        _uof = uof;    
     }
 
     [HttpGet("products/{id}")]
     public ActionResult <IEnumerable<Product>> GetProdutcsCategory(int id)
     {
-        var products = _productRepository.GetProductsForCategories(id);
+        var products = _uof.ProductRepository.GetProductsForCategories(id);
+
         if(products is null)
             return NotFound();
 
@@ -35,7 +36,7 @@ public class ProductsController : ControllerBase
     //Retorna todos os produtos
     public ActionResult<IEnumerable<Product>> Get()
     {
-        var products = _productRepository.GetAll();
+        var products = _uof.ProductRepository.GetAll();
         if (products is null)
         {
             return NotFound("Produtos não encontrados...");
@@ -47,7 +48,7 @@ public class ProductsController : ControllerBase
     //Retorna produto específico com base no ID
     public ActionResult<Product> Get(int id)
     {
-        var product = _productRepository.Get(p => p.ProductID == id);
+        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
         if (product is null)
         {
             return NotFound("Produto não encontrado");
@@ -65,7 +66,8 @@ public class ProductsController : ControllerBase
             return BadRequest();
         }
         
-        var newProduct = _productRepository.Create(product);
+        var newProduct = _uof.ProductRepository.Create(product);
+        _uof.Commit();
 
         return new CreatedAtRouteResult("ObterProduto",
             new { id = newProduct.ProductID }, newProduct);
@@ -80,23 +82,26 @@ public class ProductsController : ControllerBase
             return BadRequest();
         }
 
-        var updatedProduct = _productRepository.Update(product);
+        var updatedProduct = _uof.ProductRepository.Update(product);
+        _uof.Commit();
 
-            return Ok(updatedProduct);
+        return Ok(updatedProduct);
     }
 
     //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]
     public ActionResult Delete(int id)
     {
-        var product = _productRepository.Get(p => p.ProductID == id);
+        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
 
         if (product is null)
         {
             return NotFound("Produto não encontrado");
         }
 
-        var deletedProduct = _productRepository.Delete(product);
+        var deletedProduct = _uof.ProductRepository.Delete(product);
+        _uof.Commit();
+
         return Ok(deletedProduct);
     }
 }
