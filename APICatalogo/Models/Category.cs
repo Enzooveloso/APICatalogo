@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace APICatalogo.Models;
 [Table("Categorys")]//Define a entidade Category
@@ -21,7 +22,7 @@ public class Category
     [Required]//Iniciar mapear a propriedade ImageUrl para uma coluna Not Null
     [StringLength(300)]//Define tamanho em Bytes
     public string? ImageUrl { get; set; }
-
+    [JsonIgnore]
     public ICollection<Product>? Products { get; set; }
     
 

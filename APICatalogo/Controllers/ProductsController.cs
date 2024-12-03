@@ -1,8 +1,12 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace APICatalogo.Controllers;
 
@@ -10,32 +14,45 @@ namespace APICatalogo.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly AppDbContext _context;
-    public ProductsController(AppDbContext context)
+    private readonly IProductRepository _productRepository;
+    public ProductsController(IProductRepository productRepository)
     {
-        _context = context;
+        _productRepository = productRepository;    
     }
+
+    [HttpGet("products/{id}")]
+    public ActionResult <IEnumerable<Product>> GetProdutcsCategory(int id)
+    {
+        var products = _productRepository.GetProductsForCategories(id);
+        if(products is null)
+            return NotFound();
+
+        return Ok(products);
+    }
+
 
     [HttpGet]
     //Retorna todos os produtos
     public ActionResult<IEnumerable<Product>> Get()
     {
-        var products = _context.Products.ToList();
+        var products = _productRepository.GetAll();
         if (products is null)
         {
             return NotFound("Produtos não encontrados...");
         }
-        return products;
+        return Ok(products);
     }
 
-    [HttpGet("{id:int}", Name= "ObterProduto")]
+    [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
     //Retorna produto específico com base no ID
-    public ActionResult<Product> Get(int id) {
-        var product = _context.Products.FirstOrDefault(p=>p.ProductID == id);
-        if(product is null) {
+    public ActionResult<Product> Get(int id)
+    {
+        var product = _productRepository.Get(p => p.ProductID == id);
+        if (product is null)
+        {
             return NotFound("Produto não encontrado");
         }
-        return product;
+        return Ok(product);
     }
 
 
@@ -43,43 +60,44 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public ActionResult Post(Product product)
     {
-        if(product is null)
+        if (product is null)
         {
             return BadRequest();
         }
-        _context.Products.Add(product);
-        _context.SaveChanges();
-        return  new CreatedAtRouteResult("ObterProduto", 
-            new { id = product.ProductID }, product);
+        
+        var newProduct = _productRepository.Create(product);
+
+        return new CreatedAtRouteResult("ObterProduto",
+            new { id = newProduct.ProductID }, newProduct);
     }
 
     //Edição completa dos produtos existentes
     [HttpPut("{id:int}")]
     public ActionResult Put(int id, Product product)
     {
-        if(id != product.ProductID)
+        if (id != product.ProductID)
         {
             return BadRequest();
         }
-        _context.Entry(product).State = EntityState.Modified;
-        _context.SaveChanges();
-        return Ok(product);
+
+        var updatedProduct = _productRepository.Update(product);
+
+            return Ok(updatedProduct);
     }
 
     //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]
     public ActionResult Delete(int id)
     {
-        var product = _context.Products.FirstOrDefault(p => p.ProductID == id);
-        
-        if(  product is null)
+        var product = _productRepository.Get(p => p.ProductID == id);
+
+        if (product is null)
         {
-            return NotFound("Produto não localizado");
+            return NotFound("Produto não encontrado");
         }
 
-        _context.Products.Remove(product);
-        _context.SaveChanges();
-        return Ok(product);
+        var deletedProduct = _productRepository.Delete(product);
+        return Ok(deletedProduct);
     }
 }
 
