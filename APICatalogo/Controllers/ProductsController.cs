@@ -1,13 +1,16 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.DTO;
 using APICatalogo.Models;
+using APICatalogo.Pagination;
 using APICatalogo.Repositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace APICatalogo.Controllers;
@@ -24,17 +27,55 @@ public class ProductsController : ControllerBase
         _mapper = mapper;
     }
 
+
     [HttpGet("products/{id}")]
-    public ActionResult <IEnumerable<ProductDTO>> GetProdutcsCategory(int id)
+    public ActionResult<IEnumerable<ProductDTO>> GetProdutcsCategory(int id)
     {
         var products = _uof.ProductRepository.GetProductsForCategories(id);
 
-        if(products is null)
+        if (products is null)
             return NotFound();
 
         var productsDto = _mapper.Map<IEnumerable<ProductDTO>>(products);
 
         return Ok(productsDto);
+    }
+    
+
+    [HttpGet("pagination")]
+    public ActionResult<IEnumerable<ProductDTO>> Get([FromQuery] ProductsParameters productsParameters)
+    {
+        var products = _uof.ProductRepository.GetProducts(productsParameters);
+        return HasProduct(products);
+    }
+
+
+    private ActionResult<IEnumerable<ProductDTO>> HasProduct(PagedList<Product> products)
+    {
+        var metadata = new
+        {
+            products.TotalCount,
+            products.PageSize,
+            products.CurrentPage,
+            products.TotalPages,
+            products.HasNext,
+            products.HasPrevious
+        };
+
+        Response.Headers.Append("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+        var productsDto = _mapper.Map<IEnumerable<ProductDTO>>(products);
+
+        return Ok(productsDto);
+    }
+
+
+    [HttpGet("filter/price/pagination")]
+    public ActionResult<IEnumerable<ProductDTO>> GetProductsFilterPrice([FromQuery] ProductFilterPrice productFilterParameters)
+    {
+        var products = _uof.ProductRepository.GetProductsFilterPrice(productFilterParameters);
+
+        return HasProduct(products);
     }
 
 
@@ -45,13 +86,14 @@ public class ProductsController : ControllerBase
         var products = _uof.ProductRepository.GetAll();
         if (products is null)
         {
-            return NotFound("Produtos não encontrados...");
+            return NotFound();
         }
 
         var productsDto = _mapper.Map<IEnumerable<ProductDTO>>(products);
 
         return Ok(productsDto);
     }
+
 
     [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
     //Retorna produto específico com base no ID
@@ -89,12 +131,36 @@ public class ProductsController : ControllerBase
             new { id = newProductDto.ProductID }, newProductDto);
     }
 
+
+    [HttpPatch("{id}/ UpdatePartial")]
+    public ActionResult<ProductDTOUpdateResponse> Patch(int id, JsonPatchDocument<ProductDTOUpdateRequest> patchProductDTO)
+    {
+        if (patchProductDTO is null || id <= 0) return BadRequest();
+
+        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
+
+        if (product is null) return NotFound();
+
+        var productUpdateRequest = _mapper.Map<ProductDTOUpdateRequest>(product);
+
+        patchProductDTO.ApplyTo(productUpdateRequest, ModelState);
+
+        if (!ModelState.IsValid || TryValidateModel(productUpdateRequest)) return BadRequest(ModelState);
+
+        _mapper.Map(productUpdateRequest, product);
+        _uof.ProductRepository.Update(product);
+        _uof.Commit();
+
+        return Ok(_mapper.Map<ProductDTOUpdateResponse>(product));
+    }
+
+
     //Edição completa dos produtos existentes
     [HttpPut("{id:int}")]
     public ActionResult<ProductDTO> Put(int id, ProductDTO productDto)
     {
         if (id != productDto.ProductID) return BadRequest();
-      
+
 
         var product = _mapper.Map<Product>(productDto);
 
@@ -105,6 +171,7 @@ public class ProductsController : ControllerBase
 
         return Ok(updatedProductDto);
     }
+
 
     //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]

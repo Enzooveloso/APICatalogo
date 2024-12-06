@@ -1,12 +1,15 @@
 ﻿using APICatalogo.Context;
+using APICatalogo.DTO;
 using APICatalogo.DTO.Mapping;
 using APICatalogo.DTOs;
 using APICatalogo.Filter;
 using APICatalogo.Models;
+using APICatalogo.Pagination;
 using APICatalogo.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace APICatalogo.Controllers;
 
@@ -30,12 +33,46 @@ public class CategoriesController : ControllerBase
     public ActionResult<IEnumerable<CategoryDTO>> Get()
     {
         var categories = _uof.CategoryRepository.GetAll();
-        if(categories is null)
+        if (categories is null)
             return NotFound("Não existem categorias ...");
 
         var categoriesDto = categories.ToCategoryDTOList();
 
         return Ok(categoriesDto);
+    }
+
+    [HttpGet("pagination")]
+    public ActionResult<IEnumerable<CategoryDTO>> Get([FromQuery] CategoriesParameters categoriesParameters)
+    {
+        var categories = _uof.CategoryRepository.GetCategories(categoriesParameters);
+        return HasCategory(categories);
+    }
+
+    private ActionResult<IEnumerable<CategoryDTO>> HasCategory(PagedList<Category> categories)
+    {
+        var metadata = new
+        {
+            categories.TotalCount,
+            categories.PageSize,
+            categories.CurrentPage,
+            categories.TotalPages,
+            categories.HasNext,
+            categories.HasPrevious
+        };
+
+        Response.Headers.Append("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+        var categoriesDto = categories.ToCategoryDTOList();
+
+        return Ok(categoriesDto);
+    }
+
+    [HttpGet("filter/name/pagination")]
+    public ActionResult<IEnumerable<CategoryDTO>> GetCategoriesFiltered([FromQuery] CategoriesFilterName categorieFilter) 
+    {
+        var categoriesFiltered = _uof.CategoryRepository.GetCategoriesFilterName(categorieFilter);
+
+        return HasCategory(categoriesFiltered);
     }
 
 
@@ -47,7 +84,7 @@ public class CategoriesController : ControllerBase
 
         if (category is null)
         {
-            _logger.LogWarning($"Categoria com id= {id} naoo encontrada");
+            _logger.LogWarning($"Categoria com id= {id} nao encontrada");
             return NotFound($"Categoria com id= {id} não encontrada");
         }
 

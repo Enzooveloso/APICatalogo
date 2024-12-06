@@ -27,6 +27,7 @@ public class Repository<T> : IRepository<T> where T : class
     public T Create(T entity)
     {
         _context.Set<T>().Add(entity);
+        _context.Set<T>().Add(entity);
         return entity;
     }
 
