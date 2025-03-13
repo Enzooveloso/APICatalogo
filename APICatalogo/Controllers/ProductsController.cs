@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using X.PagedList;
 
 namespace APICatalogo.Controllers;
 
@@ -29,9 +30,9 @@ public class ProductsController : ControllerBase
 
 
     [HttpGet("products/{id}")]
-    public ActionResult<IEnumerable<ProductDTO>> GetProdutcsCategory(int id)
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProdutcsCategory(int id)
     {
-        var products = _uof.ProductRepository.GetProductsForCategories(id);
+        var products = await _uof.ProductRepository.GetProductsForCategoriesAsync(id);
 
         if (products is null)
             return NotFound();
@@ -43,23 +44,23 @@ public class ProductsController : ControllerBase
     
 
     [HttpGet("pagination")]
-    public ActionResult<IEnumerable<ProductDTO>> Get([FromQuery] ProductsParameters productsParameters)
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> Get([FromQuery] ProductsParameters productsParameters)
     {
-        var products = _uof.ProductRepository.GetProducts(productsParameters);
+        var products = await _uof.ProductRepository.GetProductsAsync(productsParameters);
         return HasProduct(products);
     }
 
 
-    private ActionResult<IEnumerable<ProductDTO>> HasProduct(PagedList<Product> products)
+    private ActionResult<IEnumerable<ProductDTO>> HasProduct(IPagedList<Product> products)
     {
         var metadata = new
         {
-            products.TotalCount,
+            products.Count,
             products.PageSize,
-            products.CurrentPage,
-            products.TotalPages,
-            products.HasNext,
-            products.HasPrevious
+            products.PageCount,
+            products.TotalItemCount,
+            products.HasNextPage,
+            products.HasPreviousPage
         };
 
         Response.Headers.Append("X-Pagination", JsonConvert.SerializeObject(metadata));
@@ -71,9 +72,9 @@ public class ProductsController : ControllerBase
 
 
     [HttpGet("filter/price/pagination")]
-    public ActionResult<IEnumerable<ProductDTO>> GetProductsFilterPrice([FromQuery] ProductFilterPrice productFilterParameters)
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProductsFilterPrice([FromQuery] ProductFilterPrice productFilterParameters)
     {
-        var products = _uof.ProductRepository.GetProductsFilterPrice(productFilterParameters);
+        var products = await _uof.ProductRepository.GetProductsFilterPriceAsync(productFilterParameters);
 
         return HasProduct(products);
     }
@@ -81,9 +82,9 @@ public class ProductsController : ControllerBase
 
     [HttpGet]
     //Retorna todos os produtos
-    public ActionResult<IEnumerable<ProductDTO>> Get()
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> Get()
     {
-        var products = _uof.ProductRepository.GetAll();
+        var products = await _uof.ProductRepository.GetAllAsync();
         if (products is null)
         {
             return NotFound();
@@ -97,9 +98,9 @@ public class ProductsController : ControllerBase
 
     [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
     //Retorna produto específico com base no ID
-    public ActionResult<ProductDTO> Get(int id)
+    public async Task<ActionResult<ProductDTO>> Get(int id)
     {
-        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
+        var product = await _uof.ProductRepository.GetAsync(p => p.ProductID == id);
         if (product is null)
         {
             return NotFound("Produto não encontrado");
@@ -113,7 +114,7 @@ public class ProductsController : ControllerBase
 
     //Criar um novo produto na API
     [HttpPost]
-    public ActionResult<ProductDTO> Post(ProductDTO productDto)
+    public async Task<ActionResult<ProductDTO>> Post(ProductDTO productDto)
     {
         if (productDto is null)
         {
@@ -123,7 +124,7 @@ public class ProductsController : ControllerBase
         var product = _mapper.Map<Product>(productDto);
 
         var newProduct = _uof.ProductRepository.Create(product);
-        _uof.Commit();
+        await _uof.CommitAsync();
 
         var newProductDto = _mapper.Map<ProductDTO>(newProduct);
 
@@ -133,11 +134,11 @@ public class ProductsController : ControllerBase
 
 
     [HttpPatch("{id}/ UpdatePartial")]
-    public ActionResult<ProductDTOUpdateResponse> Patch(int id, JsonPatchDocument<ProductDTOUpdateRequest> patchProductDTO)
+    public async Task<ActionResult<ProductDTOUpdateResponse>> Patch(int id, JsonPatchDocument<ProductDTOUpdateRequest> patchProductDTO)
     {
         if (patchProductDTO is null || id <= 0) return BadRequest();
 
-        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
+        var product = await _uof.ProductRepository.GetAsync(p => p.ProductID == id);
 
         if (product is null) return NotFound();
 
@@ -149,7 +150,7 @@ public class ProductsController : ControllerBase
 
         _mapper.Map(productUpdateRequest, product);
         _uof.ProductRepository.Update(product);
-        _uof.Commit();
+        await _uof.CommitAsync();
 
         return Ok(_mapper.Map<ProductDTOUpdateResponse>(product));
     }
@@ -157,7 +158,7 @@ public class ProductsController : ControllerBase
 
     //Edição completa dos produtos existentes
     [HttpPut("{id:int}")]
-    public ActionResult<ProductDTO> Put(int id, ProductDTO productDto)
+    public async Task<ActionResult<ProductDTO>> Put(int id, ProductDTO productDto)
     {
         if (id != productDto.ProductID) return BadRequest();
 
@@ -165,7 +166,7 @@ public class ProductsController : ControllerBase
         var product = _mapper.Map<Product>(productDto);
 
         var updatedProduct = _uof.ProductRepository.Update(product);
-        _uof.Commit();
+        await _uof.CommitAsync();
 
         var updatedProductDto = _mapper.Map<ProductDTO>(updatedProduct);
 
@@ -175,9 +176,9 @@ public class ProductsController : ControllerBase
 
     //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]
-    public ActionResult<ProductDTO> Delete(int id)
+    public async Task<ActionResult<ProductDTO>> Delete(int id)
     {
-        var product = _uof.ProductRepository.Get(p => p.ProductID == id);
+        var product = await _uof.ProductRepository.GetAsync(p => p.ProductID == id);
 
         if (product is null)
         {
@@ -185,7 +186,7 @@ public class ProductsController : ControllerBase
         }
 
         var deletedProduct = _uof.ProductRepository.Delete(product);
-        _uof.Commit();
+        await _uof.CommitAsync();
 
         var deletedProductDto = _mapper.Map<ProductDTO>(deletedProduct);
 
