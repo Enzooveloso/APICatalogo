@@ -32,6 +32,7 @@ public class CategoriesController : ControllerBase
 
 
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<CategoryDTO>>> Get()
     {
         var categories = await _uof.CategoryRepository.GetAllAsync();
@@ -44,7 +45,6 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("pagination")]
-    [Authorize]
     public async Task<ActionResult<IEnumerable<CategoryDTO>>> Get([FromQuery] CategoriesParameters categoriesParameters)
     {
         var categories = await _uof.CategoryRepository.GetCategoriesAsync(categoriesParameters);
