@@ -4,6 +4,7 @@ using APICatalogo.Models;
 using APICatalogo.Pagination;
 using APICatalogo.Repositories;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -79,8 +80,9 @@ public class ProductsController : ControllerBase
         return HasProduct(products);
     }
 
-
+    
     [HttpGet]
+    [Authorize(Policy = "UserOnly")]
     //Retorna todos os produtos
     public async Task<ActionResult<IEnumerable<ProductDTO>>> Get()
     {

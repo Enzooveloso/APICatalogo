@@ -22,12 +22,13 @@ public class TokenService : ITokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_config.GetSection("JWT").GetValue<double>("TokenValidatyInMinutes")),
+            Expires = DateTime.UtcNow.AddMinutes(_config.GetSection("JWT").GetValue<double>("TokenValidityInMinutes")),
             Audience = _config.GetSection("JWT").GetValue<string>("ValidAudience"),
             Issuer = _config.GetSection("JWT").GetValue<string>("ValidIssuer")
         };
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateJwtSecurityToken(tokenDescriptor);
+
         return token;
     }
 

@@ -13,7 +13,7 @@ namespace APICatalogo.Filter
         public void OnException(ExceptionContext context)
         {
             _logger.LogError(context.Exception, "Ocorreu um exceçao nao tratada");
-            context.Result = new ObjectResult("Ocoru um problema ao trratar a sua solicitação")
+            context.Result = new ObjectResult("Ocorreu um problema ao tratar a sua solicitação")
             {
                 StatusCode = StatusCodes.Status500InternalServerError,
             };

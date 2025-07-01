@@ -143,6 +143,7 @@ public class CategoriesController : ControllerBase
 
     //Remoção completa da categoria existentes com base no Id
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<CategoryDTO>> Delete(int id)
     {
         var category = await _uof.CategoryRepository.GetAsync(c => c.CategoryId == id);
