@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using X.PagedList;
@@ -19,6 +20,7 @@ namespace APICatalogo.Controllers;
 [EnableCors("OrigensComAcessoPermitido")]
 [Route("[controller]")]
 [ApiController]
+[EnableRateLimiting("fixedWindow")]
 public class CategoriesController : ControllerBase
 {
 
@@ -80,10 +82,10 @@ public class CategoriesController : ControllerBase
         return HasCategory(categoriesFiltered);
     }
 
-
+    [DisableRateLimiting]
     [HttpGet("{id:int}", Name = "ObterCategoria")]
     //Retorna uma categoria específica com base no ID
-    public async Task<ActionResult<CategoryDTO>> Get(int id)
+    public async Task<ActionResult<IEnumerable<CategoryDTO>>> Get(int id)
     {
         var category = await _uof.CategoryRepository.GetAsync(c => c.CategoryId == id);
 
