@@ -7,6 +7,7 @@ using APICatalogo.Models;
 using APICatalogo.Pagination;
 using APICatalogo.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ using X.PagedList;
 
 namespace APICatalogo.Controllers;
 
+[EnableCors("OrigensComAcessoPermitido")]
 [Route("[controller]")]
 [ApiController]
 public class CategoriesController : ControllerBase
