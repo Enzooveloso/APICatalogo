@@ -19,6 +19,7 @@ namespace APICatalogo.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[ApiConventionType(typeof(DefaultApiConventions))]
 public class ProductsController : ControllerBase
 {
     private readonly IUnitOfWork _uof;
@@ -80,10 +81,14 @@ public class ProductsController : ControllerBase
         return HasProduct(products);
     }
 
-    
+    /// <summary>
+    /// Exibe relação produto por categoria
+    /// </summary>
+    /// <returns> Retorna todos os produtos</returns>
     [HttpGet]
-    [Authorize(Policy = "UserOnly")]
-    //Retorna todos os produtos
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesDefaultResponseType]
     public async Task<ActionResult<IEnumerable<ProductDTO>>> Get()
     {
         var products = await _uof.ProductRepository.GetAllAsync();
@@ -136,6 +141,10 @@ public class ProductsController : ControllerBase
 
 
     [HttpPatch("{id}/ UpdatePartial")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesDefaultResponseType]
     public async Task<ActionResult<ProductDTOUpdateResponse>> Patch(int id, JsonPatchDocument<ProductDTOUpdateRequest> patchProductDTO)
     {
         if (patchProductDTO is null || id <= 0) return BadRequest();
@@ -160,6 +169,9 @@ public class ProductsController : ControllerBase
 
     //Edição completa dos produtos existentes
     [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesDefaultResponseType]
     public async Task<ActionResult<ProductDTO>> Put(int id, ProductDTO productDto)
     {
         if (id != productDto.ProductID) return BadRequest();

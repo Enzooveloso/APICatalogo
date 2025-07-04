@@ -20,6 +20,7 @@ namespace APICatalogo.Controllers;
 [EnableCors("OrigensComAcessoPermitido")]
 [Route("[controller]")]
 [ApiController]
+[ApiConventionType(typeof(DefaultApiConventions))]
 [EnableRateLimiting("fixedWindow")]
 public class CategoriesController : ControllerBase
 {
@@ -34,9 +35,14 @@ public class CategoriesController : ControllerBase
         _uof = uof;
     }
 
-
+    /// <summary>
+    /// Obtem uma lista de categorias
+    /// </summary>
+    /// <returns>Lista de obejtos categorias</returns>
     [HttpGet]
-    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesDefaultResponseType]
     public async Task<ActionResult<IEnumerable<CategoryDTO>>> Get()
     {
         var categories = await _uof.CategoryRepository.GetAllAsync();
@@ -75,16 +81,21 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("filter/name/pagination")]
-    public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategoriesFiltered([FromQuery] CategoriesFilterName categorieParameters) 
+    public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategoriesFiltered([FromQuery] CategoriesFilterName categorieParameters)
     {
         var categoriesFiltered = await _uof.CategoryRepository.GetCategoriesFilterNameAsync(categorieParameters);
 
         return HasCategory(categoriesFiltered);
     }
 
+    /// <summary>
+    /// Vategorias por IID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns> Retorna uma categoria específica com base no ID</returns>
     [DisableRateLimiting]
     [HttpGet("{id:int}", Name = "ObterCategoria")]
-    //Retorna uma categoria específica com base no ID
+
     public async Task<ActionResult<IEnumerable<CategoryDTO>>> Get(int id)
     {
         var category = await _uof.CategoryRepository.GetAsync(c => c.CategoryId == id);
@@ -96,7 +107,7 @@ public class CategoriesController : ControllerBase
         }
 
         var categoryDto = category.ToCategoryDTO();
-        
+
 
         return Ok(categoryDto);
     }
@@ -126,6 +137,9 @@ public class CategoriesController : ControllerBase
 
     //Edição completa da categoria existentes
     [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesDefaultResponseType]
     public async Task<ActionResult<CategoryDTO>> Put(int id, CategoryDTO categoryDto)
     {
         if (id != categoryDto.CategoryId)
@@ -136,7 +150,7 @@ public class CategoriesController : ControllerBase
 
         var category = categoryDto.ToCategory();
 
-       var updatedCategory = _uof.CategoryRepository.Update(category);
+        var updatedCategory = _uof.CategoryRepository.Update(category);
         await _uof.CommitAsync();
 
         var updatedCategoryDto = updatedCategory.ToCategoryDTO();

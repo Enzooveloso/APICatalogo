@@ -46,7 +46,28 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "apicatalogo", Version = "v1" });
+    //c.SwaggerDoc("v1", new OpenApiInfo { Title = "apicatalogo", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "APICatalogo",
+        Description = "Catalogo de Produtos e Categoriais",
+        TermsOfService = new Uri("https://enzo.net/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Enzo",
+            Email = "macoratti@yahoo.com",
+            Url = new Uri("https://www.enzo.net"),
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Usar Sobre LICX",
+            Url = new Uri("https://enzo.net/license"),
+        }
+    });
+
+    var xmlFilmeName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilmeName));
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
