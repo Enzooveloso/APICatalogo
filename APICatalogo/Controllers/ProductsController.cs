@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using X.PagedList;
 
@@ -43,7 +44,7 @@ public class ProductsController : ControllerBase
 
         return Ok(productsDto);
     }
-    
+
 
     [HttpGet("pagination")]
     public async Task<ActionResult<IEnumerable<ProductDTO>>> Get([FromQuery] ProductsParameters productsParameters)
@@ -88,26 +89,43 @@ public class ProductsController : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesDefaultResponseType]
     public async Task<ActionResult<IEnumerable<ProductDTO>>> Get()
     {
-        var products = await _uof.ProductRepository.GetAllAsync();
-        if (products is null)
+        try
         {
-            return NotFound();
+            var products = await _uof.ProductRepository.GetAllAsync();
+            
+            if (products is null)
+            {
+                return NotFound();
+            }
+
+            var productsDto = _mapper.Map<IEnumerable<ProductDTO>>(products);
+
+            return Ok(productsDto);
         }
-
-        var productsDto = _mapper.Map<IEnumerable<ProductDTO>>(products);
-
-        return Ok(productsDto);
+        catch
+        {
+            return BadRequest("Bad Request");
+        }
     }
 
-
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
     //Retorna produto específico com base no ID
-    public async Task<ActionResult<ProductDTO>> Get(int id)
+    public async Task<ActionResult<ProductDTO>> Get(int? id)
     {
         var product = await _uof.ProductRepository.GetAsync(p => p.ProductID == id);
+
+        if (id == null || id <= 0)
+        {
+            return BadRequest("ID invalido");
+        }
+
         if (product is null)
         {
             return NotFound("Produto não encontrado");
