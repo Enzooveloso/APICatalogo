@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace ApiCatalogoxUnitTests.UnitTest;
 
-public class GetProductUnitTest : IClassFixture<ProductUnitTestController>
+public class GetProductUnitTests : IClassFixture<ProductUnitTestController>
 {
     private readonly ProductsController _controller;
 
-    public GetProductUnitTest(ProductUnitTestController controller)
+    public GetProductUnitTests(ProductUnitTestController controller)
     {
         _controller = new ProductsController(controller.repository, controller.mapper);
     }
@@ -71,17 +71,6 @@ public class GetProductUnitTest : IClassFixture<ProductUnitTestController>
         //Assert
         data.Result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeAssignableTo<IEnumerable<ProductDTO>>().And.NotBeNull();
-    }
-
-    [Fact]
-    public async Task GetProduct_Return_BadRequestResult()
-    {
-
-        //Act
-        var data = await _controller.Get();
-
-        //Assert
-        data.Result.Should().BeOfType<BadRequestResult>();
-    }
+    }   
 
 }

@@ -139,6 +139,8 @@ public class ProductsController : ControllerBase
 
     //Criar um novo produto na API
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ProductDTO>> Post(ProductDTO productDto)
     {
         if (productDto is null)
@@ -208,6 +210,8 @@ public class ProductsController : ControllerBase
 
     //Remoção completa dos produtos existentes com base no Id
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductDTO>> Delete(int id)
     {
         var product = await _uof.ProductRepository.GetAsync(p => p.ProductID == id);
