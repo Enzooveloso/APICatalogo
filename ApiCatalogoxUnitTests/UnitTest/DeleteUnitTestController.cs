@@ -8,37 +8,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ApiCatalogoxUnitTests.UnitTest
+namespace ApiCatalogoxUnitTests.UnitTest;
+
+public class DeleteUnitTestController : IClassFixture<ProductUnitTestController>
 {
-    public class DeleteUnitTestController : IClassFixture<ProductUnitTestController>
+    private readonly ProductsController _controller;
+
+    public DeleteUnitTestController(ProductUnitTestController controller)
     {
-        private readonly ProductsController _controller;
+        _controller = new ProductsController(controller.repository, controller.mapper);
+    }
 
-        public DeleteUnitTestController(ProductUnitTestController controller)
-        {
-            _controller = new ProductsController(controller.repository, controller.mapper);
-        }
+    [Fact]
+    public async Task DeleteProductsById_Return_OkResult()
+    {
+        var prodId = 1;
 
-        [Fact]
-        public async Task DeleteProductsById_Return_OkResult()
-        {
-            var prodId = 1;
+        var result = await _controller.Delete(prodId);
 
-            var result = await _controller.Delete(prodId);
+        result.Should().NotBeNull();
+        result.Result.Should().BeOfType<OkObjectResult>();
+    }
 
-            result.Should().NotBeNull();
-            result.Result.Should().BeOfType<OkObjectResult>();
-        }
+    [Fact]
+    public async Task DeleteProductsById_Return_NotFound()
+    {
+        var prodId = 999;
 
-        [Fact]
-        public async Task DeleteProductsById_Return_NotFound()
-        {
-            var prodId = 999;
+        var result = await _controller.Delete(prodId) as ActionResult<ProductDTO>;
 
-            var result = await _controller.Delete(prodId) as ActionResult<ProductDTO>;
-
-            result.Should().NotBeNull();
-            result.Result.Should().BeOfType<NotFoundObjectResult>();
-        }
+        result.Should().NotBeNull();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 }
